@@ -1,6 +1,8 @@
 package com.lol.analyzer.client;
 
 import com.lol.analyzer.model.AccountDTO;
+import com.lol.analyzer.model.LeagueDTO;
+import com.lol.analyzer.model.SummonerDTO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -21,5 +23,28 @@ public class RiotClient {
         String url = "https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/"
                 + name + "/" + tag + "?api_key=" + apiKey;
         return restTemplate.getForObject(url, AccountDTO.class);
+    }
+
+    // Получаем ID по PUUID (через платформу, например ru или euw1)
+    public SummonerDTO getSummonerByPuuid(String puuid) {
+        String cleanPuuid = puuid.trim();
+        String url = "https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/"
+                + cleanPuuid + "?api_key=" + apiKey;
+
+        System.out.println("Запрос к Summoner-V4: " + url);
+
+        return restTemplate.getForObject(url, SummonerDTO.class);
+    }
+
+
+    // Получаем ранг напрямую по PUUID
+    public LeagueDTO[] getLeagueEntriesByPuuid(String puuid) {
+
+        // /by-puuid/ вместо /by-summoner/
+        String url = "https://euw1.api.riotgames.com/lol/league/v4/entries/by-puuid/"
+                + puuid + "?api_key=" + apiKey;
+
+        System.out.println("Запрос к League-V4 (by-puuid): " + url);
+        return restTemplate.getForObject(url, LeagueDTO[].class);
     }
 }
