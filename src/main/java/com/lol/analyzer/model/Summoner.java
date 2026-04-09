@@ -16,6 +16,11 @@ public class Summoner {
     private String gameName;
     private String tagLine;
 
+    private String tier;
+    private String rank;
+    private Integer leaguePoints;
+    private Long summonerLevel;
+
     // Пустой конструктор (для JPA)
     public Summoner() {}
 

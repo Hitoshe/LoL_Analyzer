@@ -2,7 +2,9 @@ package com.lol.analyzer.service;
 
 import com.lol.analyzer.client.RiotClient;
 import com.lol.analyzer.model.AccountDTO;
+import com.lol.analyzer.model.LeagueDTO;
 import com.lol.analyzer.model.Summoner;
+import com.lol.analyzer.model.SummonerDTO;
 import com.lol.analyzer.repository.SummonerRepository;
 import org.springframework.stereotype.Service;
 
@@ -25,20 +27,45 @@ public class SummonerService {
 
         System.out.println("Ищем в базе: [" + cleanName + "] # [" + cleanTag + "]");
 
-        // 1. Ищем в базе
-        Optional<Summoner> cachedSummoner = summonerRepository.findByGameNameIgnoreCaseAndTagLineIgnoreCase(name, tag);
+        // 1. Сначала проверяем базу (Кэш)
+        Optional<Summoner> cachedSummoner = summonerRepository.findByGameNameIgnoreCaseAndTagLineIgnoreCase(cleanName, cleanTag);
 
         if (cachedSummoner.isPresent()) {
-            System.out.println("Достали из базы: " + name);
+            System.out.println("Достали из базы: " + cleanName);
             return cachedSummoner.get();
         }
 
-        // 2. Если в базе нет, идем в Riot
-        System.out.println("В базе нет, идем в Riot API: " + name);
-        AccountDTO dto = riotClient.getAccountData(name, tag);
+        // 2. Шаг 1: Получаем PUUID (через Account-V1)
+        AccountDTO accountDto = riotClient.getAccountData(cleanName, cleanTag);
+        String puuid = accountDto.getPuuid();
 
-        // 3. Сохраняем результат в базу на будущее
-        Summoner newSummoner = new Summoner(dto);
-        return summonerRepository.save(newSummoner);
+        // 3. Шаг 2: Получаем уровень аккаунта (через Summoner-V4)
+        // Мы НЕ прерываем работу, если тут что-то не так, просто берем уровень
+        SummonerDTO summonerDto = riotClient.getSummonerByPuuid(puuid);
+
+        // 4. Шаг 3: Получаем Ранг напрямую через PUUID (Новый метод!)
+        LeagueDTO[] leagues = riotClient.getLeagueEntriesByPuuid(puuid);
+
+        // 5. Собираем нашу сущность Summoner для сохранения в базу
+        Summoner summoner = new Summoner(accountDto);
+
+        // Устанавливаем уровень, если данные пришли
+        if (summonerDto != null) {
+            summoner.setSummonerLevel(summonerDto.getSummonerLevel());
+        }
+
+        // Обрабатываем лиги (ищем SoloQ)
+        if (leagues != null) {
+            for (LeagueDTO league : leagues) {
+                if ("RANKED_SOLO_5x5".equals(league.getQueueType())) {
+                    summoner.setTier(league.getTier());
+                    summoner.setRank(league.getRank());
+                    summoner.setLeaguePoints(league.getLeaguePoints());
+                }
+            }
+        }
+
+        System.out.println("Данные получены из Riot API и сохранены в базу для: " + cleanName);
+        return summonerRepository.save(summoner);
     }
 }
