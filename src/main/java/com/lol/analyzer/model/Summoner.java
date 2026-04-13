@@ -25,6 +25,9 @@ public class Summoner {
     private Integer topChampionPoints;
     private String topChampionName;
 
+    private double avgKda;
+    private double avgGpm; // Gold Per Minute
+
     // Пустой конструктор (для JPA)
     public Summoner() {}
 

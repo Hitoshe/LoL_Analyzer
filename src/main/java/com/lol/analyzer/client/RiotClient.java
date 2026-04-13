@@ -1,9 +1,6 @@
 package com.lol.analyzer.client;
 
-import com.lol.analyzer.model.AccountDTO;
-import com.lol.analyzer.model.LeagueDTO;
-import com.lol.analyzer.model.MasteryDTO;
-import com.lol.analyzer.model.SummonerDTO;
+import com.lol.analyzer.model.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -51,5 +48,19 @@ public class RiotClient {
                 + puuid + "/top?count=3&api_key=" + apiKey;
 
         return restTemplate.getForObject(url, MasteryDTO[].class);
+    }
+
+    // 1. Получаем список ID матчей
+    public String[] getMatchIds(String puuid) {
+        String url = "https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/"
+                + puuid + "/ids?start=0&count=20&api_key=" + apiKey;
+        return restTemplate.getForObject(url, String[].class);
+    }
+
+    // 2. Получаем данные конкретного матча
+    public MatchDTO getMatchDetails(String matchId) {
+        String url = "https://europe.api.riotgames.com/lol/match/v5/matches/"
+                + matchId + "?api_key=" + apiKey;
+        return restTemplate.getForObject(url, MatchDTO.class);
     }
 }
