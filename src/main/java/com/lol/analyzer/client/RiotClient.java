@@ -52,8 +52,12 @@ public class RiotClient {
 
     // 1. Получаем список ID матчей
     public String[] getMatchIds(String puuid) {
+        // &type=ranked
+        // Это автоматически отфильтрует SoloQ и Flex, убрав Арамы и Обычки
         String url = "https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/"
-                + puuid + "/ids?start=0&count=20&api_key=" + apiKey;
+                + puuid + "/ids?start=0&count=5&type=ranked&api_key=" + apiKey;
+
+        System.out.println("Запрашиваем только ранговые матчи для: " + puuid);
         return restTemplate.getForObject(url, String[].class);
     }
 

@@ -24,12 +24,21 @@ public class DataDragonService {
     @PostConstruct
     public void init() {
         try {
-            String url = "https://ddragon.leagueoflegends.com/cdn/14.1.1/data/en_US/champion.json";
+            // 1. Сначала узнаем актуальную версию
+            String versionUrl = "https://ddragon.leagueoflegends.com/api/versions.json";
+            String[] versions = restTemplate.getForObject(versionUrl, String[].class);
 
-            // 1. Получаем ответ как обычную строку (String)
-            String jsonResponse = restTemplate.getForObject(url, String.class);
+            if (versions == null || versions.length == 0) {
+                throw new RuntimeException("Не удалось получить список версий");
+            }
 
-            // 2. Превращаем строку в дерево JSON через ObjectMapper
+            String latestVersion = versions[0]; // Берем самую первую (свежую)
+            System.out.println("=== DATA DRAGON: Detected latest version: " + latestVersion + " ===");
+
+            // 2. Теперь подставляем эту версию в ссылку на чемпионов
+            String champUrl = "https://ddragon.leagueoflegends.com/cdn/" + latestVersion + "/data/en_US/champion.json";
+
+            String jsonResponse = restTemplate.getForObject(champUrl, String.class);
             JsonNode root = objectMapper.readTree(jsonResponse);
             JsonNode data = root.get("data");
 

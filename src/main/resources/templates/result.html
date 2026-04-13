@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>LoL Match Analysis</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        body { background-color: #0b0e11; color: #e4e6eb; font-family: 'Roboto', sans-serif; margin: 0; padding: 40px; }
+        h1 { font-family: 'Orbitron', sans-serif; color: #f0f0f0; text-transform: uppercase; letter-spacing: 2px; text-align:center; }
+        .win-container { max-width: 1000px; margin: 0 auto 40px; }
+        .win-bar { display: flex; height: 60px; border-radius: 30px; overflow: hidden; border: 3px solid #1c2128; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+        .blue-side { background: linear-gradient(90deg, #0052d4, #4364f7); display: flex; align-items: center; justify-content: center; font-size: 1.5em; font-weight: bold; transition: width 1.5s; }
+        .red-side { background: linear-gradient(90deg, #cb2d3e, #ef473a); display: flex; align-items: center; justify-content: center; font-size: 1.5em; font-weight: bold; transition: width 1.5s; }
+        .matchup-row { display: flex; align-items: center; justify-content: center; max-width: 1000px; margin: 0 auto 15px; gap: 20px; }
+        .card { flex: 1; background: #161b22; padding: 15px; border-radius: 10px; border: 1px solid #30363d; display: flex; flex-direction: column; }
+        .blue-card { border-left: 5px solid #4364f7; text-align: left; }
+        .red-card { border-right: 5px solid #ef473a; text-align: right; }
+        .lane-badge { background: #21262d; padding: 10px; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-family: 'Orbitron'; border: 2px solid #30363d; font-size: 0.8em; }
+        .champ-name { color: #d2a8ff; font-weight: bold; font-size: 1.1em; }
+        .player-info { color: #8b949e; font-size: 0.9em; margin-bottom: 5px; }
+        .stats { font-size: 0.85em; color: #c9d1d9; }
+        .main-tag { background: #238636; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7em; margin-left: 5px; }
+        .back-btn { display: inline-block; margin-top: 40px; color: #58a6ff; text-decoration: none; border: 1px solid #58a6ff; padding: 10px 20px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+<h1>Анализ текущего матча</h1>
+<div class="win-container">
+    <div class="win-bar">
+        <div class="blue-side" th:style="'width:' + ${teamA_chance} + '%'" th:text="${teamA_chance} + '%'"></div>
+        <div class="red-side" th:style="'width:' + ${teamB_chance} + '%'" th:text="${teamB_chance} + '%'"></div>
+    </div>
+</div>
+
+<div th:each="m : ${matchups}" class="matchup-row">
+    <div class="card blue-card">
+        <div class="champ-name">
+            <span th:text="${#strings.toUpperCase(m.playerA.gameName)}"></span>
+            <span class="main-tag" th:if="${#strings.equalsIgnoreCase(playersA[mStat.index].selectedChampion, m.playerA.topChampionName)}">MAIN</span>
+        </div>
+        <div class="player-info">
+            <span th:text="${playersA[mStat.index].selectedChampion}"></span> |
+            <span th:text="${m.playerA.tier} ?: 'Unranked'"></span> |
+            Lvl: <b th:text="${m.playerA.summonerLevel}"></b>
+        </div>
+        <div class="stats">
+            KDA: <b th:text="${m.playerA.avgKda}"></b> | GPM: <b th:text="${m.playerA.avgGpm}"></b>
+        </div>
+    </div>
+
+    <div class="lane-badge" th:text="${m.lane}"></div>
+
+    <div class="card red-card">
+        <div class="champ-name">
+            <span class="main-tag" th:if="${#strings.equalsIgnoreCase(playersB[mStat.index].selectedChampion, m.playerB.topChampionName)}">MAIN</span>
+            <span th:text="${#strings.toUpperCase(m.playerB.gameName)}"></span>
+        </div>
+        <div class="player-info">
+            Lvl: <b th:text="${m.playerB.summonerLevel}"></b> |
+            <span th:text="${m.playerB.tier} ?: 'Unranked'"></span> |
+            <span th:text="${playersB[mStat.index].selectedChampion}"></span>
+        </div>
+        <div class="stats">
+            KDA: <b th:text="${m.playerB.avgKda}"></b> | GPM: <b th:text="${m.playerB.avgGpm}"></b>
+        </div>
+    </div>
+</div>
+
+<div style="text-align: center;">
+    <a href="/" class="back-btn">НОВЫЙ АНАЛИЗ</a>
+</div>
+</body>
+</html>
