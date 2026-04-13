@@ -21,6 +21,10 @@ public class Summoner {
     private Integer leaguePoints;
     private Long summonerLevel;
 
+    private Long topChampionId;
+    private Integer topChampionPoints;
+    private String topChampionName;
+
     // Пустой конструктор (для JPA)
     public Summoner() {}
 

@@ -5,6 +5,7 @@ import com.lol.analyzer.model.AccountDTO;
 import com.lol.analyzer.model.LeagueDTO;
 import com.lol.analyzer.model.Summoner;
 import com.lol.analyzer.model.SummonerDTO;
+import com.lol.analyzer.model.MasteryDTO;
 import com.lol.analyzer.repository.SummonerRepository;
 import org.springframework.stereotype.Service;
 
@@ -15,10 +16,12 @@ public class SummonerService {
 
     private final RiotClient riotClient;
     private final SummonerRepository summonerRepository;
+    private final DataDragonService dataDragonService;
 
-    public SummonerService(RiotClient riotClient, SummonerRepository summonerRepository) {
+    public SummonerService(RiotClient riotClient, SummonerRepository summonerRepository, DataDragonService dataDragonService) {
         this.riotClient = riotClient;
         this.summonerRepository = summonerRepository;
+        this.dataDragonService = dataDragonService;
     }
 
     public Summoner getAccount(String name, String tag) {
@@ -63,6 +66,20 @@ public class SummonerService {
                     summoner.setLeaguePoints(league.getLeaguePoints());
                 }
             }
+        }
+
+        // Получаем мастерство чемпионов
+        MasteryDTO[] masteries = riotClient.getTopMasteries(puuid);
+
+        // Заполняем данные о топ-1 чемпионе, если они есть
+        if (masteries != null && masteries.length > 0) {
+            long champId = masteries[0].getChampionId();
+            summoner.setTopChampionId(champId);
+            summoner.setTopChampionPoints(masteries[0].getChampionPoints());
+
+            // ПРЕВРАЩАЕМ ID В ИМЯ
+            String champName = dataDragonService.getChampionName(champId);
+            summoner.setTopChampionName(champName);
         }
 
         System.out.println("Данные получены из Riot API и сохранены в базу для: " + cleanName);
