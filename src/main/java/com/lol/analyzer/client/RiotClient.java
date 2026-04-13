@@ -18,53 +18,55 @@ public class RiotClient {
     }
 
     public AccountDTO getAccountData(String name, String tag) {
+        sleep(); // Пауза
         String url = "https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/"
                 + name + "/" + tag + "?api_key=" + apiKey;
         return restTemplate.getForObject(url, AccountDTO.class);
     }
 
-    // Получаем ID по PUUID (через платформу, например ru или euw1)
     public SummonerDTO getSummonerByPuuid(String puuid) {
+        sleep(); // Пауза
         String cleanPuuid = puuid.trim();
         String url = "https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/"
                 + cleanPuuid + "?api_key=" + apiKey;
-
-        System.out.println("Запрос к Summoner-V4: " + url);
-
         return restTemplate.getForObject(url, SummonerDTO.class);
     }
 
-    // Получаем ранг напрямую по PUUID
     public LeagueDTO[] getLeagueEntriesByPuuid(String puuid) {
+        sleep(); // Пауза
         String url = "https://euw1.api.riotgames.com/lol/league/v4/entries/by-puuid/"
                 + puuid + "?api_key=" + apiKey;
-
-        System.out.println("Запрос к League-V4 (by-puuid): " + url);
         return restTemplate.getForObject(url, LeagueDTO[].class);
     }
 
     public MasteryDTO[] getTopMasteries(String puuid) {
+        sleep(); // Пауза
         String url = "https://euw1.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/"
                 + puuid + "/top?count=3&api_key=" + apiKey;
-
         return restTemplate.getForObject(url, MasteryDTO[].class);
     }
 
-    // 1. Получаем список ID матчей
     public String[] getMatchIds(String puuid) {
-        // &type=ranked
-        // Это автоматически отфильтрует SoloQ и Flex, убрав Арамы и Обычки
+        sleep(); // Пауза
         String url = "https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/"
                 + puuid + "/ids?start=0&count=5&type=ranked&api_key=" + apiKey;
-
-        System.out.println("Запрашиваем только ранговые матчи для: " + puuid);
         return restTemplate.getForObject(url, String[].class);
     }
 
-    // 2. Получаем данные конкретного матча
     public MatchDTO getMatchDetails(String matchId) {
+        sleep(); // Пауза
         String url = "https://europe.api.riotgames.com/lol/match/v5/matches/"
                 + matchId + "?api_key=" + apiKey;
         return restTemplate.getForObject(url, MatchDTO.class);
+    }
+
+    private void sleep() {
+        try {
+            // 100мс паузы позволяют делать не более 10 запросов в секунду.
+            // Это безопасно для лимита в 20 запросов/сек.
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 }

@@ -25,6 +25,8 @@ public class Summoner {
     private Integer topChampionPoints;
     private String topChampionName;
 
+    private java.time.LocalDateTime lastUpdated;
+
     private Double avgKda;
     private Double avgGpm; // Gold Per Minute
 
