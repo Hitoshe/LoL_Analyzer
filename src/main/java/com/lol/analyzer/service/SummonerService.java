@@ -4,6 +4,7 @@ import com.lol.analyzer.client.RiotClient;
 import com.lol.analyzer.model.*;
 import com.lol.analyzer.repository.SummonerRepository;
 import org.springframework.stereotype.Service;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -23,23 +24,27 @@ public class SummonerService {
         String cleanName = name.trim();
         String cleanTag = tag.trim();
 
-        // [ШАГ 1] Проверка локальной базы (Кэш)
+        // 1. Проверяем кэш в базе
         Optional<Summoner> cached = summonerRepository.findByGameNameIgnoreCaseAndTagLineIgnoreCase(cleanName, cleanTag);
+
         if (cached.isPresent()) {
-            return cached.get();
+            Summoner s = cached.get();
+            // Если данные свежие (обновлялись менее 24 часов назад) - отдаем сразу
+            if (s.getLastUpdated() != null && s.getLastUpdated().isAfter(LocalDateTime.now().minusHours(24))) {
+                System.out.println("ИСПОЛЬЗУЕМ КЭШ: Игрок " + cleanName + " обновлялся недавно.");
+                return s;
+            }
+            System.out.println("ОБНОВЛЕНИЕ: Данные игрока " + cleanName + " устарели, идем в API.");
         }
 
-        // [ШАГ 2] Получаем PUUID (Глобальный паспорт игрока)
+        // 2. Если данных нет или они старые - делаем цепочку запросов
         AccountDTO accountDto = riotClient.getAccountData(cleanName, cleanTag);
         String puuid = accountDto.getPuuid();
 
-        // [ШАГ 3] Получаем уровень и статы лиги (Rank/Tier)
         SummonerDTO summonerDto = riotClient.getSummonerByPuuid(puuid);
         LeagueDTO[] leagues = riotClient.getLeagueEntriesByPuuid(puuid);
 
-        // Создаем объект для базы
         Summoner summoner = new Summoner(accountDto);
-
         if (summonerDto != null) {
             summoner.setSummonerLevel(summonerDto.getSummonerLevel());
         }
@@ -54,7 +59,6 @@ public class SummonerService {
             }
         }
 
-        // [ШАГ 4] Мастерство чемпионов (На ком игрок "тащит")
         MasteryDTO[] masteries = riotClient.getTopMasteries(puuid);
         if (masteries != null && masteries.length > 0) {
             long champId = masteries[0].getChampionId();
@@ -63,30 +67,24 @@ public class SummonerService {
             summoner.setTopChampionName(dataDragonService.getChampionName(champId));
         }
 
-        // [ШАГ 5] Анализ последних матчей (Расчет KDA и GPM)
         calculateRecentStats(summoner, puuid);
 
-        System.out.println("Анализ завершен для: " + cleanName);
+        // 3. Ставим метку времени обновления перед сохранением
+        summoner.setLastUpdated(LocalDateTime.now());
+
+        System.out.println("ДАННЫЕ ОБНОВЛЕНЫ: " + cleanName);
         return summonerRepository.save(summoner);
     }
 
-    /**
-     * Вспомогательный метод для расчета KDA и Золота за последние матчи
-     */
     private void calculateRecentStats(Summoner summoner, String puuid) {
-        // Берем последние 5 матчей (для экономии лимитов API)
         String[] matchIds = riotClient.getMatchIds(puuid);
-
-        double totalKills = 0, totalDeaths = 0, totalAssists = 0;
-        double totalGold = 0, totalSeconds = 0;
+        double totalKills = 0, totalDeaths = 0, totalAssists = 0, totalGold = 0, totalSeconds = 0;
 
         if (matchIds != null) {
             for (String mId : matchIds) {
                 MatchDTO match = riotClient.getMatchDetails(mId);
                 if (match != null) {
                     totalSeconds += match.getInfo().getGameDuration();
-
-                    // Ищем нашего игрока среди 10 участников матча
                     for (MatchDTO.ParticipantDTO p : match.getInfo().getParticipants()) {
                         if (p.getPuuid().equals(puuid)) {
                             totalKills += p.getKills();
@@ -100,9 +98,7 @@ public class SummonerService {
             }
         }
 
-        // Формула KDA: (Убийства + Помощь) / Смерти (минимум 1 смерть, чтобы не делить на 0)
         double kda = (totalKills + totalAssists) / Math.max(1, totalDeaths);
-        // Золото в минуту
         double gpm = totalGold / (Math.max(1, totalSeconds) / 60.0);
 
         summoner.setAvgKda(Math.round(kda * 100.0) / 100.0);
