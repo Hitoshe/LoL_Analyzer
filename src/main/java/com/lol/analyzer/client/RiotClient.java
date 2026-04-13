@@ -2,6 +2,7 @@ package com.lol.analyzer.client;
 
 import com.lol.analyzer.model.AccountDTO;
 import com.lol.analyzer.model.LeagueDTO;
+import com.lol.analyzer.model.MasteryDTO;
 import com.lol.analyzer.model.SummonerDTO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -36,15 +37,19 @@ public class RiotClient {
         return restTemplate.getForObject(url, SummonerDTO.class);
     }
 
-
     // Получаем ранг напрямую по PUUID
     public LeagueDTO[] getLeagueEntriesByPuuid(String puuid) {
-
-        // /by-puuid/ вместо /by-summoner/
         String url = "https://euw1.api.riotgames.com/lol/league/v4/entries/by-puuid/"
                 + puuid + "?api_key=" + apiKey;
 
         System.out.println("Запрос к League-V4 (by-puuid): " + url);
         return restTemplate.getForObject(url, LeagueDTO[].class);
+    }
+
+    public MasteryDTO[] getTopMasteries(String puuid) {
+        String url = "https://euw1.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/"
+                + puuid + "/top?count=3&api_key=" + apiKey;
+
+        return restTemplate.getForObject(url, MasteryDTO[].class);
     }
 }
