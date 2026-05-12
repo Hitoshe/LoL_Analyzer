@@ -6,10 +6,45 @@
     <style>
         body { background-color: #0b0e11; color: #e4e6eb; font-family: 'Roboto', sans-serif; margin: 0; padding: 40px; }
         h1 { font-family: 'Orbitron', sans-serif; color: #f0f0f0; text-transform: uppercase; letter-spacing: 2px; text-align:center; }
-        .win-container { max-width: 1000px; margin: 0 auto 40px; }
+
+        .win-container { max-width: 1000px; margin: 0 auto 20px; }
         .win-bar { display: flex; height: 60px; border-radius: 30px; overflow: hidden; border: 3px solid #1c2128; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
         .blue-side { background: linear-gradient(90deg, #0052d4, #4364f7); display: flex; align-items: center; justify-content: center; font-size: 1.5em; font-weight: bold; transition: width 1.5s; }
         .red-side { background: linear-gradient(90deg, #cb2d3e, #ef473a); display: flex; align-items: center; justify-content: center; font-size: 1.5em; font-weight: bold; transition: width 1.5s; }
+
+        /* НОВЫЙ СТИЛЬ ДЛЯ AI БЛОКА */
+        .ai-verdict-container {
+            max-width: 1000px;
+            margin: 0 auto 40px;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 15px;
+            padding: 20px;
+            position: relative;
+            box-shadow: inset 0 0 20px rgba(88, 166, 255, 0.05);
+        }
+        .ai-label {
+            position: absolute;
+            top: -12px;
+            left: 30px;
+            background: #58a6ff;
+            color: #0b0e11;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7em;
+            font-weight: bold;
+            padding: 2px 12px;
+            border-radius: 5px;
+            letter-spacing: 1px;
+        }
+        .ai-text {
+            font-style: italic;
+            line-height: 1.6;
+            color: #58a6ff;
+            margin: 0;
+            font-size: 1.1em;
+            text-align: left;
+        }
+
         .matchup-row { display: flex; align-items: center; justify-content: center; max-width: 1000px; margin: 0 auto 15px; gap: 20px; }
         .card { flex: 1; background: #161b22; padding: 15px; border-radius: 10px; border: 1px solid #30363d; display: flex; flex-direction: column; }
         .blue-card { border-left: 5px solid #4364f7; text-align: left; }
@@ -24,6 +59,8 @@
 </head>
 <body>
 <h1>Анализ текущего матча</h1>
+
+<!-- Полоска вероятности -->
 <div class="win-container">
     <div class="win-bar">
         <div class="blue-side" th:style="'width:' + ${teamA_chance} + '%'" th:text="${teamA_chance} + '%'"></div>
@@ -31,6 +68,13 @@
     </div>
 </div>
 
+<!-- НОВЫЙ БЛОК: Вердикт от Gemini AI -->
+<div class="ai-verdict-container" th:if="${aiCommentary}">
+    <div class="ai-label">AI ANALYST</div>
+    <p class="ai-text" th:text="${aiCommentary}"></p>
+</div>
+
+<!-- Список матчапов по линиям -->
 <div th:each="m : ${matchups}" class="matchup-row">
     <div class="card blue-card">
         <div class="champ-name">

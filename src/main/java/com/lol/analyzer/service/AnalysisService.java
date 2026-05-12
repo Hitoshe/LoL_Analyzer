@@ -31,7 +31,7 @@ public class AnalysisService {
 
             String prediction = (pA.getWinScore() > pB.getWinScore()) ? "Синие сильнее" : "Красные сильнее";
             String difficulty = Math.abs(pA.getWinScore() - pB.getWinScore()) > 20 ? "HARD" : "MEDIUM";
-            matchups.add(new LaneMatchup(pA.getLane(), pA.getSummoner(), pB.getSummoner(), prediction, difficulty));
+            matchups.add(new LaneMatchup(pA.getLane(), pA.getSummoner(), pB.getSummoner(), pA.getSelectedChampion(), pB.getSelectedChampion(), prediction, difficulty));
         }
 
         result.put("matchups", matchups);
