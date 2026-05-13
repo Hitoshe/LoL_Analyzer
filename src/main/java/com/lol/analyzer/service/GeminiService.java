@@ -10,6 +10,10 @@ import org.springframework.web.client.RestTemplate;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Calls Google Gemini REST API to produce a short Russian tactical summary for the UI.
+ * The prompt is built from team win chances and per-lane {@link LaneMatchup} rows.
+ */
 @Service
 public class GeminiService {
 
@@ -17,7 +21,7 @@ public class GeminiService {
     private String apiKey;
 
     private final RestTemplate restTemplate;
-    private final ObjectMapper objectMapper = new ObjectMapper(); // Наш ручной парсер
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public GeminiService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
@@ -51,12 +55,10 @@ public class GeminiService {
         );
 
         try {
-            System.out.println("--- ОТПРАВКА В GEMINI ---");
+            System.out.println("--- GEMINI REQUEST ---");
 
-            // ШАГ 1: Получаем ответ как СТРОКУ (String), а не JsonNode
             String jsonResponse = restTemplate.postForObject(url, requestBody, String.class);
 
-            // ШАГ 2: Вручную читаем строку через ObjectMapper
             JsonNode response = objectMapper.readTree(jsonResponse);
 
             if (response != null && response.has("candidates")) {
@@ -67,7 +69,7 @@ public class GeminiService {
             return "AI прислал пустой ответ.";
 
         } catch (Exception e) {
-            System.err.println("ОШИБКА GEMINI: " + e.getMessage());
+            System.err.println("GEMINI ERROR: " + e.getMessage());
             e.printStackTrace();
             return "Аналитик AI временно в тильте. Полагайтесь на свои силы!";
         }

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>История анализов — LoL Analyzer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        body { background-color: #0b0e11; color: #e4e6eb; font-family: 'Roboto', sans-serif; margin: 0; padding: 24px 40px 60px; }
+        h1 { font-family: 'Orbitron', sans-serif; color: #f0f0f0; text-transform: uppercase; letter-spacing: 2px; text-align: center; }
+        .nav { text-align: center; margin-bottom: 24px; }
+        .nav a { color: #58a6ff; text-decoration: none; margin: 0 12px; border: 1px solid #30363d; padding: 8px 16px; border-radius: 6px; }
+        .nav a:hover { border-color: #58a6ff; }
+        .db-stats {
+            max-width: 900px; margin: 0 auto 28px; padding: 14px 18px; background: #161b22; border: 1px solid #30363d;
+            border-radius: 10px; font-size: 0.9em; color: #8b949e; text-align: center;
+        }
+        .db-stats strong { color: #58a6ff; }
+        .empty { text-align: center; color: #8b949e; margin-top: 48px; }
+        .card {
+            max-width: 1000px; margin: 0 auto 32px; background: #161b22; border: 1px solid #30363d; border-radius: 14px;
+            padding: 20px 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+        }
+        .card-head { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid #30363d; padding-bottom: 12px; margin-bottom: 16px; }
+        .time { color: #8b949e; font-size: 0.9em; }
+        .win-bar { display: flex; height: 44px; border-radius: 22px; overflow: hidden; border: 2px solid #1c2128; margin-bottom: 16px; }
+        .blue-side { background: linear-gradient(90deg, #0052d4, #4364f7); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1em; }
+        .red-side { background: linear-gradient(90deg, #cb2d3e, #ef473a); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1em; }
+        .ai-box {
+            background: #0d1117; border: 1px solid #30363d; border-radius: 10px; padding: 14px 16px; margin-bottom: 16px;
+            border-left: 4px solid #58a6ff;
+        }
+        .ai-label { font-family: 'Orbitron', sans-serif; font-size: 0.65em; color: #58a6ff; letter-spacing: 1px; margin-bottom: 8px; }
+        .ai-text { font-style: italic; line-height: 1.55; color: #c9d1d9; margin: 0; white-space: pre-wrap; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.88em; }
+        th, td { border: 1px solid #30363d; padding: 8px 10px; text-align: left; }
+        th { background: #21262d; color: #8b949e; font-weight: 600; }
+        .lane { font-weight: bold; color: #d2a8ff; text-align: center; width: 56px; }
+        .num { text-align: right; }
+    </style>
+</head>
+<body>
+<h1>История анализов</h1>
+<div class="nav">
+    <a href="/">Новый анализ</a>
+</div>
+
+<div class="db-stats" th:if="${savedMatchesCount != null}">
+    В базе сохранено матчей (после обновления профилей): <strong th:text="${savedMatchesCount}">0</strong>
+    &nbsp;·&nbsp; записей в справочнике чемпионов: <strong th:text="${championsInDbCount}">0</strong>
+    <span th:if="${savedMatchesCount == 0}"> — появятся после первого «свежего» запроса к Riot для игрока.</span>
+</div>
+
+<p class="empty" th:if="${histories == null or histories.isEmpty()}">Пока нет сохранённых анализов. Запустите анализ на главной — результат и совет AI попадут сюда.</p>
+
+<div th:each="h : ${histories}" class="card">
+    <div class="card-head">
+        <span class="time" th:text="${#temporals.format(h.createdAt, 'dd.MM.yyyy HH:mm')}">дата</span>
+        <span th:text="'#' + ${h.id}">#id</span>
+    </div>
+    <div class="win-bar">
+        <div class="blue-side" th:style="'width:' + ${h.teamAChance} + '%'" th:text="'Синие ' + ${h.teamAChance} + '%'"></div>
+        <div class="red-side" th:style="'width:' + ${h.teamBChance} + '%'" th:text="'Красные ' + ${h.teamBChance} + '%'"></div>
+    </div>
+    <div class="ai-box" th:if="${h.aiAdvice != null and !h.aiAdvice.isEmpty()}">
+        <div class="ai-label">GEMINI — СОХРАНЁННЫЙ СОВЕТ</div>
+        <p class="ai-text" th:text="${h.aiAdvice}">текст</p>
+    </div>
+    <table>
+        <thead>
+        <tr>
+            <th class="lane">Линия</th>
+            <th>Синие (ник#тег)</th>
+            <th class="num">WinScore</th>
+            <th>Красные (ник#тег)</th>
+            <th class="num">WinScore</th>
+            <th>Прогноз линии</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="line : ${h.lines}">
+            <td class="lane" th:text="${line.lane}">TOP</td>
+            <td>
+                <span th:text="${line.aGameName} + '#' + ${line.aTagLine}">A</span>
+                <br/>
+                <span th:text="${line.aChampion}">champ</span>
+                · <span th:text="${line.aTier} ?: '—'">tier</span>
+                · KDA <span th:text="${line.aAvgKda} ?: '—'">—</span>
+                · GPM <span th:text="${line.aAvgGpm} ?: '—'">—</span>
+            </td>
+            <td class="num" th:text="${#numbers.formatDecimal(line.aWinScore, 1, 1)}">0</td>
+            <td>
+                <span th:text="${line.bGameName} + '#' + ${line.bTagLine}">B</span>
+                <br/>
+                <span th:text="${line.bChampion}">champ</span>
+                · <span th:text="${line.bTier} ?: '—'">tier</span>
+                · KDA <span th:text="${line.bAvgKda} ?: '—'">—</span>
+                · GPM <span th:text="${line.bAvgGpm} ?: '—'">—</span>
+            </td>
+            <td class="num" th:text="${#numbers.formatDecimal(line.bWinScore, 1, 1)}">0</td>
+            <td th:text="${line.prediction} + ' (' + ${line.difficulty} + ')'">прогноз</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

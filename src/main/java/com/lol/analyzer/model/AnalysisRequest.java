@@ -1,8 +1,12 @@
 package com.lol.analyzer.model;
 
 import lombok.Data;
+
 import java.util.List;
 
+/**
+ * Thymeleaf form binding for POST {@code /analyze}: two parallel lists of {@link PlayerInput} rows.
+ */
 @Data
 public class AnalysisRequest {
     private List<PlayerInput> teamA;
@@ -12,7 +16,7 @@ public class AnalysisRequest {
     public static class PlayerInput {
         private String name;
         private String tag;
-        private String lane; // TOP, JUNGLE, MIDDLE, BOTTOM, UTILITY
+        private String lane;
         private String championName;
     }
 }

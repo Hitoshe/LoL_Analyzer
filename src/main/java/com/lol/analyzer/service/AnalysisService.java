@@ -2,8 +2,13 @@ package com.lol.analyzer.service;
 
 import com.lol.analyzer.model.*;
 import org.springframework.stereotype.Service;
+
 import java.util.*;
 
+/**
+ * Builds a 5v5 (or partial roster) analysis: resolves each {@link Summoner} via {@link SummonerService},
+ * computes a per-player {@link TeamMember#getWinScore()}, derives team win percentages, and materializes {@link LaneMatchup} rows.
+ */
 @Service
 public class AnalysisService {
 
@@ -48,9 +53,13 @@ public class AnalysisService {
 
     private List<TeamMember> processTeam(List<AnalysisRequest.PlayerInput> inputs) {
         List<TeamMember> team = new ArrayList<>();
-        if (inputs == null) return team;
+        if (inputs == null) {
+            return team;
+        }
         for (AnalysisRequest.PlayerInput input : inputs) {
-            if (input.getName() == null || input.getName().isBlank()) continue;
+            if (input.getName() == null || input.getName().isBlank()) {
+                continue;
+            }
             Summoner s = summonerService.getAccount(input.getName(), input.getTag());
             double score = calculateWinScore(s, input.getChampionName(), input.getLane());
             team.add(new TeamMember(s, input.getChampionName(), input.getLane(), score));
@@ -58,57 +67,58 @@ public class AnalysisService {
         return team;
     }
 
+    /**
+     * Heuristic WinScore: weighted rank, account level, recent KDA, role-normalized GPM, plus optional main-champion synergy.
+     */
     private double calculateWinScore(Summoner s, String selectedChamp, String lane) {
-        // 1. Ранг с условиями прыжков
         double rankScore = getRankWeight(s.getTier());
 
-        // 2. Уровень (500 лвл = 100 баллов)
         double levelScore = Math.min(100.0, s.getSummonerLevel() / 5.0);
 
-        // 3. KDA (5.0 KDA = 100 баллов)
         double kdaScore = Math.min(100.0, (s.getAvgKda() != null ? s.getAvgKda() : 2.5) * 20.0);
 
-        // 4. GPM (Золото) - АДАПТИВНЫЙ РАСЧЕТ ПО РОЛЯМ
         double rawGpm = (s.getAvgGpm() != null ? s.getAvgGpm() : 300.0);
         double gpmScore = calculateGpmScore(rawGpm, lane);
 
-        // Итоговый баланс: Ранг (40%), Уровень (15%), KDA (25%), GPM (20%)
         double totalScore = (rankScore * 0.4) + (levelScore * 0.15) + (kdaScore * 0.25) + (gpmScore * 0.2);
 
-        // Бонус за Мейна
-        if (selectedChamp != null && s.getTopChampionName() != null &&
-                selectedChamp.equalsIgnoreCase(s.getTopChampionName())) {
-            totalScore *= 1.15; // +15% к силе
+        if (selectedChamp != null && s.getTopChampionName() != null
+                && selectedChamp.equalsIgnoreCase(s.getTopChampionName())) {
+            totalScore *= 1.15;
         }
 
         return totalScore;
     }
 
+    /**
+     * Maps raw GPM to a 0–110 score using role-specific benchmarks (supports carry/jungle/support economy differences).
+     */
     private double calculateGpmScore(double gpm, String lane) {
-        // Устанавливаем "планку" 100 баллов для каждой роли
         double benchmark = switch (lane.toUpperCase()) {
-            case "MID", "ADC" -> 450.0; // Самый высокий фарм
-            case "TOP" -> 420.0;        // Соло линия, чуть меньше мида
-            case "JNG" -> 380.0;        // Лесники получают меньше лайнеров
-            case "SUP" -> 260.0;        // Саппорты не фармят, 260 - это отличный показатель
+            case "MID", "ADC" -> 450.0;
+            case "TOP" -> 420.0;
+            case "JNG" -> 380.0;
+            case "SUP" -> 260.0;
             default -> 400.0;
         };
-        return Math.min(110.0, (gpm / benchmark) * 100.0); // Даем до 110 баллов если перефармил норму
+        return Math.min(110.0, (gpm / benchmark) * 100.0);
     }
 
     private double getRankWeight(String tier) {
-        if (tier == null) return 5;
+        if (tier == null) {
+            return 5;
+        }
         return switch (tier.toUpperCase()) {
             case "IRON" -> 10;
             case "BRONZE" -> 20;
             case "SILVER" -> 30;
             case "GOLD" -> 40;
-            case "PLATINUM" -> 55;   // +15 от Gold
+            case "PLATINUM" -> 55;
             case "EMERALD" -> 65;
-            case "DIAMOND" -> 80;    // +15 от Emerald
-            case "MASTER" -> 95;     // +15 от Diamond
-            case "GRANDMASTER" -> 115; // +20 от Master
-            case "CHALLENGER" -> 130;  // +15 от GM
+            case "DIAMOND" -> 80;
+            case "MASTER" -> 95;
+            case "GRANDMASTER" -> 115;
+            case "CHALLENGER" -> 130;
             default -> 5;
         };
     }

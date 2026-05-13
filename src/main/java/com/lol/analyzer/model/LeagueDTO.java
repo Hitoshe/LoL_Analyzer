@@ -1,10 +1,14 @@
 package com.lol.analyzer.model;
+
 import lombok.Data;
 
+/**
+ * League-V4 ranked entry fragment used to read solo-queue tier/LP when {@code queueType} is {@code RANKED_SOLO_5x5}.
+ */
 @Data
 public class LeagueDTO {
-    private String queueType; // RANKED_SOLO_5x5 или RANKED_FLEX_SR
-    private String tier;      // GOLD, DIAMOND, CHALLENGER
-    private String rank;      // I, II, III, IV
-    private int leaguePoints; // LP
+    private String queueType;
+    private String tier;
+    private String rank;
+    private int leaguePoints;
 }

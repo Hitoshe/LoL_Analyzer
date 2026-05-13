@@ -1,4 +1,13 @@
 HELP.md
+
+# Local secrets (Riot / Gemini); never commit these filenames with real values.
+.env
+.env.local
+.env.*.local
+*.pem
+secrets.properties
+application-local.properties
+
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/

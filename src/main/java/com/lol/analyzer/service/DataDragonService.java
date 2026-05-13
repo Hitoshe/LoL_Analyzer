@@ -9,14 +9,17 @@ import org.springframework.web.client.RestTemplate;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Loads Riot Data Dragon {@code champion.json} once at startup and keeps an in-memory id→name map.
+ * Used to resolve champion display names without extra HTTP calls during normal requests.
+ */
 @Service
 public class DataDragonService {
 
     private final Map<Long, String> championMap = new HashMap<>();
     private final RestTemplate restTemplate;
-    private final ObjectMapper objectMapper = new ObjectMapper(); // Помощник для парсинга
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    // Внедряем RestTemplate через конструктор
     public DataDragonService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
@@ -24,18 +27,16 @@ public class DataDragonService {
     @PostConstruct
     public void init() {
         try {
-            // 1. Сначала узнаем актуальную версию
             String versionUrl = "https://ddragon.leagueoflegends.com/api/versions.json";
             String[] versions = restTemplate.getForObject(versionUrl, String[].class);
 
             if (versions == null || versions.length == 0) {
-                throw new RuntimeException("Не удалось получить список версий");
+                throw new RuntimeException("Data Dragon: empty versions list");
             }
 
-            String latestVersion = versions[0]; // Берем самую первую (свежую)
-            System.out.println("=== DATA DRAGON: Detected latest version: " + latestVersion + " ===");
+            String latestVersion = versions[0];
+            System.out.println("=== DATA DRAGON: latest patch version: " + latestVersion + " ===");
 
-            // 2. Теперь подставляем эту версию в ссылку на чемпионов
             String champUrl = "https://ddragon.leagueoflegends.com/cdn/" + latestVersion + "/data/en_US/champion.json";
 
             String jsonResponse = restTemplate.getForObject(champUrl, String.class);
@@ -49,7 +50,7 @@ public class DataDragonService {
                     String name = champ.get("name").asText();
                     championMap.put(id, name);
                 });
-                System.out.println("=== DATA DRAGON: Loaded " + championMap.size() + " champions ===");
+                System.out.println("=== DATA DRAGON: loaded " + championMap.size() + " champions ===");
             }
         } catch (Exception e) {
             System.err.println("=== DATA DRAGON ERROR ===: " + e.getMessage());

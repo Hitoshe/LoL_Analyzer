@@ -5,12 +5,16 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
 
-@Entity // Создание таблицы на основе класса
-@Table(name = "summoners") // Имя таблицы в базе
+/**
+ * JPA entity mapped to {@code summoners}: cached Riot identity, ranked snapshot, mastery top pick,
+ * aggregated recent ranked stats, and {@code lastUpdated} for the 24h cache policy.
+ */
+@Entity
+@Table(name = "summoners")
 @Data
 public class Summoner {
 
-    @Id // PUUID - уникальный ключ
+    @Id
     private String puuid;
 
     private String gameName;
@@ -28,12 +32,11 @@ public class Summoner {
     private java.time.LocalDateTime lastUpdated;
 
     private Double avgKda;
-    private Double avgGpm; // Gold Per Minute
+    private Double avgGpm;
 
-    // Пустой конструктор (для JPA)
-    public Summoner() {}
+    public Summoner() {
+    }
 
-    // Удобный конструктор, чтобы быстро превращать DTO в Entity
     public Summoner(AccountDTO dto) {
         this.puuid = dto.getPuuid();
         this.gameName = dto.getGameName().trim();

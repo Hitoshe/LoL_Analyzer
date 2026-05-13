@@ -4,6 +4,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.ToString;
 
+/**
+ * One lane row in the UI: both {@link Summoner} references, chosen champions, heuristic prediction, and difficulty band.
+ */
 @Data
 @AllArgsConstructor
 @ToString
@@ -12,9 +15,9 @@ public class LaneMatchup {
     private Summoner playerA;
     private Summoner playerB;
 
-    private String championA; // Кто выбран в текущем матче за команду А
-    private String championB; // Кто выбран в текущем матче за команду Б
+    private String championA;
+    private String championB;
 
-    private String prediction; // Кто фаворит на линии
-    private String difficulty; // EASY, MEDIUM, HARD
+    private String prediction;
+    private String difficulty;
 }

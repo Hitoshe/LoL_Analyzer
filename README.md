@@ -68,15 +68,28 @@ src/main/java/com/lol/analyzer/
 
 Get your temporary key from the Riot Developer Portal.
 
-### 2. Configure Environment
+### 2. Configure secrets (do not commit real keys)
 
-Update your src/main/resources/application.properties file with your credentials:
+Create a file named `.env` in the project root (same folder as `pom.xml`). Copy from `.env.example` and set:
+
 ```
-Properties
-download
-content_copy
-expand_less
-riot.api.key=RGAPI-YOUR-KEY-HERE
+RIOT_API_KEY=RGAPI-your-riot-key
+GEMINI_API_KEY=your-gemini-key
+```
+
+- **Local run:** `dotenv-java` loads `.env` at startup (see `AnalyzerApplication`). You can also set the same variables in your OS or IntelliJ Run Configuration.
+- **Docker:** `docker compose` reads `.env` via `env_file` (see `docker-compose.yml`).
+
+`application.properties` maps them to `riot.api.key` / `gemini.api.key`:
+
+```
+riot.api.key=${RIOT_API_KEY:}
+gemini.api.key=${GEMINI_API_KEY:}
+```
+
+Database URL for local Postgres (optional; defaults match Docker port mapping):
+
+```
 spring.datasource.url=jdbc:postgresql://localhost:5434/lol_db
 spring.datasource.username=user
 spring.datasource.password=pass
@@ -86,13 +99,10 @@ spring.datasource.password=pass
 The project is fully containerized. Run the following command in the project root:
 
 ```
-Bash
-download
-content_copy
-expand_less
-mvn clean package -DskipTests
-docker-compose up --build
+docker compose up --build
 ```
+
+Copy `.env.example` to `.env` and add keys before starting, or Compose will fail when the app needs Riot/Gemini.
 Once started, the service will be available at: http://localhost:8080
 
 Project Status: MVP Completed.
