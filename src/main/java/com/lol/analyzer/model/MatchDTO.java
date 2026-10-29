@@ -6,7 +6,7 @@ import lombok.Data;
 import java.util.List;
 
 /**
- * Subset of Riot Match-V5 JSON used here: metadata for {@code matchId}, info for duration and per-participant stats.
+ * Subset of Riot Match-V5 JSON used here: metadata for {@code matchId}, info for queue/patch/time and per-participant stats.
  * Nested DTOs are {@code public static} so other packages (services) can reference them without synthetic accessors.
  */
 @Data
@@ -28,6 +28,10 @@ public class MatchDTO {
     public static class InfoDTO {
         private List<ParticipantDTO> participants;
         private long gameDuration;
+        private long gameStartTimestamp;
+        private int queueId;
+        private String gameVersion;
+        private String platformId;
     }
 
     @Data
@@ -40,5 +44,8 @@ public class MatchDTO {
         private int deaths;
         private int assists;
         private int goldEarned;
+        private boolean win;
+        private String teamPosition;
+        private boolean gameEndedInEarlySurrender;
     }
 }

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
+<body>
+<div th:fragment="card(c, side)" th:class="'card ' + ${side} + '-card' + (${c == null} ? ' empty' : '')">
+    <th:block th:if="${c == null}">Нет игрока на этой линии</th:block>
+    <th:block th:if="${c != null}">
+        <div class="card-head">
+            <img class="champ-icon" th:if="${c.championIcon() != null}" th:src="${c.championIcon()}" th:alt="${c.championName()}">
+            <div>
+                <a class="name" th:href="${c.profileUrl()}" target="_blank" rel="noopener" th:text="${c.riotId()}">Nick#TAG</a>
+                <div>
+                    <span class="champ-name" th:if="${c.championName() != null}" th:text="${c.championName()}">Champion</span>
+                    <span class="main-tag" th:if="${c.mainChampion()}">MAIN</span>
+                </div>
+            </div>
+        </div>
+        <div class="line">
+            <b th:text="${c.rankLabel()}">Gold II</b>
+            <span class="muted" th:if="${c.level() != null}" th:text="' · ур. ' + ${c.level()}"></span>
+        </div>
+        <div class="line muted" th:if="${c.seasonLabel() != null}" th:text="${c.seasonLabel()}"></div>
+        <div class="line" th:text="${c.recentLabel()}">recent</div>
+        <div class="line muted" th:if="${c.kdaLabel() != null}" th:text="${c.kdaLabel()}"></div>
+        <div class="badges">
+            <span th:class="'badge ' + ${c.roleFitCss()}" th:text="${c.roleFitLabel()}">Своя роль</span>
+            <span th:class="'badge ' + ${c.sessionCss()}" th:text="${c.sessionLabel()}">Сессия</span>
+        </div>
+        <div class="line muted" th:if="${c.roleHabitLabel() != null}" th:text="${c.roleHabitLabel()}"></div>
+        <div class="line" th:if="${c.championLabel() != null}" th:text="${c.championLabel()}"></div>
+        <div class="notes" th:each="n : ${c.notes()}" th:text="'• ' + ${n}"></div>
+        <div class="line muted" th:text="${c.strengthLabel()}">Сила</div>
+    </th:block>
+</div>
+</body>
+</html>
