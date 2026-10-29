@@ -1,116 +1,175 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
 <head>
+    <meta charset="UTF-8">
     <title>LoL Match Analysis</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #0b0e11; color: #e4e6eb; font-family: 'Roboto', sans-serif; margin: 0; padding: 40px; }
-        h1 { font-family: 'Orbitron', sans-serif; color: #f0f0f0; text-transform: uppercase; letter-spacing: 2px; text-align:center; }
+        * { box-sizing: border-box; }
+        body { background-color: #0b0e11; color: #e4e6eb; font-family: 'Roboto', sans-serif; margin: 0; padding: 32px 24px 60px; }
+        h1 { font-family: 'Orbitron', sans-serif; color: #f0f0f0; text-transform: uppercase; letter-spacing: 2px; text-align: center; margin: 0 0 6px; }
+        h2 { font-family: 'Orbitron', sans-serif; font-size: 0.95em; letter-spacing: 1px; color: #8b949e; margin: 0 0 12px; text-transform: uppercase; }
+        a { color: #58a6ff; }
+        .wrap { max-width: 1100px; margin: 0 auto; }
+        .sub { text-align: center; color: #8b949e; margin-bottom: 24px; }
 
-        .win-container { max-width: 1000px; margin: 0 auto 20px; }
-        .win-bar { display: flex; height: 60px; border-radius: 30px; overflow: hidden; border: 3px solid #1c2128; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
-        .blue-side { background: linear-gradient(90deg, #0052d4, #4364f7); display: flex; align-items: center; justify-content: center; font-size: 1.5em; font-weight: bold; transition: width 1.5s; }
-        .red-side { background: linear-gradient(90deg, #cb2d3e, #ef473a); display: flex; align-items: center; justify-content: center; font-size: 1.5em; font-weight: bold; transition: width 1.5s; }
+        .bar-block { margin-bottom: 18px; }
+        .bar-title { display: flex; justify-content: space-between; color: #8b949e; font-size: 0.9em; margin-bottom: 6px; }
+        .win-bar { display: flex; height: 54px; border-radius: 27px; overflow: hidden; border: 3px solid #1c2128; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+        .win-bar.small { height: 34px; border-width: 2px; opacity: 0.85; }
+        .blue-side { background: linear-gradient(90deg, #0052d4, #4364f7); display: flex; align-items: center; justify-content: center; font-size: 1.4em; font-weight: bold; white-space: nowrap; overflow: hidden; }
+        .red-side { background: linear-gradient(90deg, #cb2d3e, #ef473a); display: flex; align-items: center; justify-content: center; font-size: 1.4em; font-weight: bold; white-space: nowrap; overflow: hidden; }
+        .win-bar.small .blue-side, .win-bar.small .red-side { font-size: 1em; }
 
-        /* НОВЫЙ СТИЛЬ ДЛЯ AI БЛОКА */
-        .ai-verdict-container {
-            max-width: 1000px;
-            margin: 0 auto 40px;
-            background: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 15px;
-            padding: 20px;
-            position: relative;
-            box-shadow: inset 0 0 20px rgba(88, 166, 255, 0.05);
-        }
-        .ai-label {
-            position: absolute;
-            top: -12px;
-            left: 30px;
-            background: #58a6ff;
-            color: #0b0e11;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.7em;
-            font-weight: bold;
-            padding: 2px 12px;
-            border-radius: 5px;
-            letter-spacing: 1px;
-        }
-        .ai-text {
-            font-style: italic;
-            line-height: 1.6;
-            color: #58a6ff;
-            margin: 0;
-            font-size: 1.1em;
-            text-align: left;
-        }
+        .panel { background: #161b22; border: 1px solid #30363d; border-radius: 14px; padding: 18px 20px; margin-bottom: 22px; }
+        .confidence { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 6px; }
+        .badge { padding: 2px 10px; border-radius: 10px; font-size: 0.8em; font-weight: 500; border: 1px solid #30363d; }
+        .badge.good { background: rgba(63, 185, 80, 0.15); color: #3fb950; border-color: #238636; }
+        .badge.neutral { background: rgba(210, 153, 34, 0.12); color: #d29922; border-color: #9e6a03; }
+        .badge.bad { background: rgba(248, 81, 73, 0.12); color: #f85149; border-color: #da3633; }
+        .badge.muted { color: #8b949e; }
+        .warnings { margin: 6px 0 0; padding-left: 18px; color: #8b949e; font-size: 0.88em; }
 
-        .matchup-row { display: flex; align-items: center; justify-content: center; max-width: 1000px; margin: 0 auto 15px; gap: 20px; }
-        .card { flex: 1; background: #161b22; padding: 15px; border-radius: 10px; border: 1px solid #30363d; display: flex; flex-direction: column; }
-        .blue-card { border-left: 5px solid #4364f7; text-align: left; }
-        .red-card { border-right: 5px solid #ef473a; text-align: right; }
-        .lane-badge { background: #21262d; padding: 10px; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-family: 'Orbitron'; border: 2px solid #30363d; font-size: 0.8em; }
-        .champ-name { color: #d2a8ff; font-weight: bold; font-size: 1.1em; }
-        .player-info { color: #8b949e; font-size: 0.9em; margin-bottom: 5px; }
-        .stats { font-size: 0.85em; color: #c9d1d9; }
-        .main-tag { background: #238636; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7em; margin-left: 5px; }
-        .back-btn { display: inline-block; margin-top: 40px; color: #58a6ff; text-decoration: none; border: 1px solid #58a6ff; padding: 10px 20px; border-radius: 5px; }
+        .ai-verdict-container { position: relative; box-shadow: inset 0 0 20px rgba(88, 166, 255, 0.05); }
+        .ai-label { position: absolute; top: -11px; left: 24px; background: #58a6ff; color: #0b0e11; font-family: 'Orbitron', sans-serif;
+            font-size: 0.7em; font-weight: bold; padding: 2px 12px; border-radius: 5px; letter-spacing: 1px; }
+        .ai-text { font-style: italic; line-height: 1.6; color: #58a6ff; margin: 6px 0 0; font-size: 1.05em; white-space: pre-wrap; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.92em; }
+        th, td { padding: 8px 10px; border-bottom: 1px solid #21262d; text-align: left; }
+        th { color: #8b949e; font-weight: 500; }
+        td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+        .pos { color: #4f8cff; }
+        .neg { color: #ef6a5f; }
+        .draft-tag { font-size: 0.75em; color: #d2a8ff; margin-left: 6px; }
+
+        .matchup-row { display: flex; align-items: stretch; gap: 14px; margin-bottom: 14px; }
+        .card { flex: 1; background: #161b22; padding: 14px; border-radius: 10px; border: 1px solid #30363d; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+        .card.empty { justify-content: center; align-items: center; color: #484f58; }
+        .blue-card { border-left: 5px solid #4364f7; }
+        .red-card { border-right: 5px solid #ef473a; }
+        .card-head { display: flex; align-items: center; gap: 10px; }
+        .red-card .card-head { flex-direction: row-reverse; text-align: right; }
+        .champ-icon { width: 44px; height: 44px; border-radius: 8px; border: 1px solid #30363d; }
+        .name { font-weight: 700; font-size: 1.05em; color: #f0f6fc; text-decoration: none; word-break: break-all; }
+        .name:hover { text-decoration: underline; }
+        .champ-name { color: #d2a8ff; font-weight: 500; }
+        .line { font-size: 0.86em; color: #c9d1d9; }
+        .muted { color: #8b949e; }
+        .red-card .line, .red-card .badges { text-align: right; justify-content: flex-end; }
+        .badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+        .main-tag { background: #238636; color: white; padding: 1px 6px; border-radius: 4px; font-size: 0.7em; }
+        .notes { font-size: 0.82em; color: #d29922; }
+
+        .lane-mid { width: 150px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; flex-shrink: 0; }
+        .lane-badge { background: #21262d; border-radius: 50%; width: 62px; height: 62px; display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-family: 'Orbitron'; border: 2px solid #30363d; font-size: 0.72em; }
+        .lane-chance { font-weight: 700; }
+        .counter-note { font-size: 0.75em; color: #8b949e; }
+
+        .actions { text-align: center; margin-top: 30px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        .back-btn { display: inline-block; color: #58a6ff; text-decoration: none; border: 1px solid #58a6ff; padding: 10px 20px; border-radius: 5px;
+            background: transparent; font-size: 0.95em; cursor: pointer; font-family: inherit; }
     </style>
 </head>
 <body>
-<h1>Анализ текущего матча</h1>
+<div class="wrap">
+    <h1>Анализ матча</h1>
+    <div class="sub" th:text="'Сервер ' + ${a.region().name()} + ' — ' + ${a.region().getDisplayName()}">Сервер</div>
 
-<!-- Полоска вероятности -->
-<div class="win-container">
-    <div class="win-bar">
-        <div class="blue-side" th:style="'width:' + ${teamA_chance} + '%'" th:text="${teamA_chance} + '%'"></div>
-        <div class="red-side" th:style="'width:' + ${teamB_chance} + '%'" th:text="${teamB_chance} + '%'"></div>
+    <div class="bar-block">
+        <div class="bar-title">
+            <span th:text="${a.hasDraft()} ? 'Итог: после пиков' : 'Шанс до пиков (чемпионы не указаны)'">Итог</span>
+            <span>Синие · Красные</span>
+        </div>
+        <div class="win-bar">
+            <div class="blue-side" th:style="'width:' + ${a.finalBlue()} + '%'" th:text="${a.finalBlue()} + '%'"></div>
+            <div class="red-side" th:style="'width:' + ${100 - a.finalBlue()} + '%'"
+                 th:text="${#numbers.formatDecimal(100 - a.finalBlue(), 1, 1, 'POINT')} + '%'"></div>
+        </div>
     </div>
-</div>
-
-<!-- НОВЫЙ БЛОК: Вердикт от Gemini AI -->
-<div class="ai-verdict-container" th:if="${aiCommentary}">
-    <div class="ai-label">AI ANALYST</div>
-    <p class="ai-text" th:text="${aiCommentary}"></p>
-</div>
-
-<!-- Список матчапов по линиям -->
-<div th:each="m : ${matchups}" class="matchup-row">
-    <div class="card blue-card">
-        <div class="champ-name">
-            <span th:text="${#strings.toUpperCase(m.playerA.gameName)}"></span>
-            <span class="main-tag" th:if="${#strings.equalsIgnoreCase(playersA[mStat.index].selectedChampion, m.playerA.topChampionName)}">MAIN</span>
-        </div>
-        <div class="player-info">
-            <span th:text="${playersA[mStat.index].selectedChampion}"></span> |
-            <span th:text="${m.playerA.tier} ?: 'Unranked'"></span> |
-            Lvl: <b th:text="${m.playerA.summonerLevel}"></b>
-        </div>
-        <div class="stats">
-            KDA: <b th:text="${m.playerA.avgKda}"></b> | GPM: <b th:text="${m.playerA.avgGpm}"></b>
+    <div class="bar-block" th:if="${a.hasDraft()}">
+        <div class="bar-title"><span>До пиков (только игроки и роли)</span></div>
+        <div class="win-bar small">
+            <div class="blue-side" th:style="'width:' + ${a.preDraftBlue()} + '%'" th:text="${a.preDraftBlue()} + '%'"></div>
+            <div class="red-side" th:style="'width:' + ${100 - a.preDraftBlue()} + '%'"
+                 th:text="${#numbers.formatDecimal(100 - a.preDraftBlue(), 1, 1, 'POINT')} + '%'"></div>
         </div>
     </div>
 
-    <div class="lane-badge" th:text="${m.lane}"></div>
+    <div class="panel">
+        <div class="confidence">
+            <span>Уверенность прогноза:</span>
+            <span th:class="'badge ' + ${a.confidenceCss()}" th:text="${a.confidenceLabel()}">Средняя</span>
+        </div>
+        <ul class="warnings" th:if="${!a.warnings().isEmpty()}">
+            <li th:each="w : ${a.warnings()}" th:text="${w}">warning</li>
+        </ul>
+    </div>
 
-    <div class="card red-card">
-        <div class="champ-name">
-            <span class="main-tag" th:if="${#strings.equalsIgnoreCase(playersB[mStat.index].selectedChampion, m.playerB.topChampionName)}">MAIN</span>
-            <span th:text="${#strings.toUpperCase(m.playerB.gameName)}"></span>
-        </div>
-        <div class="player-info">
-            Lvl: <b th:text="${m.playerB.summonerLevel}"></b> |
-            <span th:text="${m.playerB.tier} ?: 'Unranked'"></span> |
-            <span th:text="${playersB[mStat.index].selectedChampion}"></span>
-        </div>
-        <div class="stats">
-            KDA: <b th:text="${m.playerB.avgKda}"></b> | GPM: <b th:text="${m.playerB.avgGpm}"></b>
+    <div class="panel ai-verdict-container" th:if="${aiCommentary}">
+        <div class="ai-label">AI ANALYST</div>
+        <p class="ai-text" th:text="${aiCommentary}"></p>
+    </div>
+
+    <div class="panel">
+        <h2>Из чего сложился шанс</h2>
+        <table>
+            <thead>
+            <tr><th>Фактор</th><th class="num">Синие</th><th class="num">Красные</th><th class="num">Влияние на шанс синих</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="f : ${a.factors()}">
+                <td><span th:text="${f.label()}">фактор</span><span class="draft-tag" th:if="${f.draft()}">пики</span></td>
+                <td class="num" th:text="${f.blue()}">0</td>
+                <td class="num" th:text="${f.red()}">0</td>
+                <td class="num" th:classappend="${f.impact() > 0.05} ? 'pos' : (${f.impact() < -0.05} ? 'neg' : '')"
+                    th:text="${#numbers.formatDecimal(f.impact(), 1, 1, 'POINT')} + ' п.п.'">0</td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="muted" style="font-size:0.8em;margin-top:8px;">
+            Значения в очках Elo: 100 очков разницы ≈ 64% на победу. Влияние — сколько процентных пунктов фактор
+            добавил бы синим, если бы был единственным.
         </div>
     </div>
-</div>
 
-<div style="text-align: center;">
-    <a href="/" class="back-btn">НОВЫЙ АНАЛИЗ</a>
+    <h2>Линии</h2>
+    <div th:each="lane : ${a.lanes()}" class="matchup-row">
+        <div th:replace="~{fragments/player :: card(${lane.blue()}, 'blue')}"></div>
+        <div class="lane-mid">
+            <div class="lane-badge" th:text="${lane.lane()}">TOP</div>
+            <div class="lane-chance" th:if="${lane.blueLaneChance() != null}"
+                 th:classappend="${lane.blueLaneChance() >= 50} ? 'pos' : 'neg'"
+                 th:text="${lane.blueLaneChance() >= 50} ? ('Синие ' + ${lane.blueLaneChance()} + '%') : ('Красные ' + ${#numbers.formatDecimal(100 - lane.blueLaneChance(), 1, 1, 'POINT')} + '%')">50%</div>
+            <div class="counter-note" th:if="${lane.counterNote() != null}" th:text="${lane.counterNote()}"></div>
+        </div>
+        <div th:replace="~{fragments/player :: card(${lane.red()}, 'red')}"></div>
+    </div>
+
+    <div class="panel" th:if="${!a.synergyNotes().isEmpty()}">
+        <h2>Связки</h2>
+        <div th:each="n : ${a.synergyNotes()}" class="line" th:text="${n}"></div>
+    </div>
+
+    <div class="actions">
+        <form action="/edit" method="post" style="display:inline;">
+            <input type="hidden" name="region" th:value="${form.region}">
+            <th:block th:each="p, st : ${form.teamA}" th:if="${p != null}">
+                <input type="hidden" th:name="'teamA[' + ${st.index} + '].riotId'" th:value="${p.riotId}">
+                <input type="hidden" th:name="'teamA[' + ${st.index} + '].lane'" th:value="${p.lane}">
+                <input type="hidden" th:name="'teamA[' + ${st.index} + '].championName'" th:value="${p.championName}">
+            </th:block>
+            <th:block th:each="p, st : ${form.teamB}" th:if="${p != null}">
+                <input type="hidden" th:name="'teamB[' + ${st.index} + '].riotId'" th:value="${p.riotId}">
+                <input type="hidden" th:name="'teamB[' + ${st.index} + '].lane'" th:value="${p.lane}">
+                <input type="hidden" th:name="'teamB[' + ${st.index} + '].championName'" th:value="${p.championName}">
+            </th:block>
+            <button type="submit" class="back-btn" th:text="${a.hasDraft()} ? 'ИЗМЕНИТЬ СОСТАВ / ПИКИ' : 'ДОБАВИТЬ ПИКИ'">ДОБАВИТЬ ПИКИ</button>
+        </form>
+        <a href="/" class="back-btn">НОВЫЙ АНАЛИЗ</a>
+        <a href="/history" class="back-btn">ИСТОРИЯ</a>
+    </div>
 </div>
 </body>
 </html>

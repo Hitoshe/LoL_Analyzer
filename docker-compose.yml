@@ -5,8 +5,10 @@ services:
       - "8080:8080"
     depends_on:
       - db
+    env_file:
+      - path: .env
+        required: false
     environment:
-      # ВНУТРИ сети Docker приложение общается с базой по внутреннему порту 5432
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/lol_db
       - SPRING_DATASOURCE_USERNAME=user
       - SPRING_DATASOURCE_PASSWORD=pass
@@ -18,5 +20,4 @@ services:
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=pass
     ports:
-      # СНАРУЖИ (для IDEA) порт 5434, а ВНУТРИ контейнера база всегда на 5432
       - "5434:5432"

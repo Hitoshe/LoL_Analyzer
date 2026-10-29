@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
+<body>
+<div th:fragment="team-panel(rows, prefix, title, css)" th:class="'team ' + ${css}" th:attr="data-team=${prefix}">
+    <div class="team-head">
+        <h3 th:text="${title}">Команда</h3>
+        <div class="team-actions">
+            <button type="button" class="btn bulk-toggle">Вставить список</button>
+            <button type="button" class="btn team-clear">Очистить</button>
+        </div>
+    </div>
+    <div class="bulk">
+        <textarea placeholder="Ник1#EUW&#10;Ник2#EUW&#10;... или строки из чата лобби"></textarea>
+        <div class="hint">По одному игроку на строку, в порядке Топ → Лес → Мид → АДК → Саппорт.</div>
+        <button type="button" class="btn bulk-apply">Заполнить</button>
+    </div>
+    <div class="player-row" th:each="p, st : ${rows}">
+        <select class="lane-select" th:name="${prefix} + '[' + ${st.index} + '].lane'">
+            <option th:each="l : ${lanes}" th:value="${l.name()}" th:text="${l.name()}" th:selected="${l.name() == p.lane}"></option>
+        </select>
+        <input type="text" class="riot-input" th:name="${prefix} + '[' + ${st.index} + '].riotId'" th:value="${p.riotId}"
+               placeholder="Ник#TAG" autocomplete="off" spellcheck="false">
+        <div class="champ-wrap">
+            <img class="champ-icon" src="" alt="">
+            <input type="text" class="champ-input" list="champions" th:name="${prefix} + '[' + ${st.index} + '].championName'"
+                   th:value="${p.championName}" placeholder="Чемпион" autocomplete="off">
+        </div>
+        <button type="button" class="btn btn-x row-clear" title="Очистить строку">×</button>
+    </div>
+</div>
+</body>
+</html>
